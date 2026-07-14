@@ -1,0 +1,56 @@
+id: rabbitmq-management-api-detect
+
+info:
+  name: RabbitMQ Management API - Detect
+  author: Sourabh Grover
+  severity: info
+  description: |
+    Detects RabbitMQ instances by probing the management HTTP API and
+    dashboard. Extracts RabbitMQ and Erlang versions from the API
+    endpoint when accessible without authentication.
+  reference:
+    - https://www.rabbitmq.com/docs/management#http-api
+  metadata:
+    max-request: 6
+    verified: false
+    vendor: rabbitmq
+    product: rabbitmq
+    shodan-query: title:"RabbitMQ Management"
+  tags: tech,rabbitmq,oss,detect,http,discovery
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/api/overview"
+      - "http://{{Hostname}}:15672"
+      - "http://{{Hostname}}:15672/api/overview"
+      - "https://{{Hostname}}:15671"
+      - "https://{{Hostname}}:15671/api/overview"
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "rabbitmq_version"
+
+      - type: word
+        part: body
+        words:
+          - "RabbitMQ Management"
+
+    extractors:
+      - type: regex
+        part: body
+        regex:
+          - '"rabbitmq_version":"([0-9.]+)"'
+        name: rabbitmq_version
+
+      - type: regex
+        part: body
+        regex:
+          - '"erlang_version":"([^"]+)"'
+        name: erlang_version
